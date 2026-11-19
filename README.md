@@ -16,7 +16,14 @@ Ominaisuudet:
   (Kansalliskirjasto), Open Librariesta ja Google Booksesta. Vain tyhjät
   kentät täytetään — itse kirjoitetut tiedot säilyvät. Kansikuvat haetaan,
   kun ne ovat saatavilla. Google Books -rajapinnan rajoituksia voi nostaa
-  lisäämällä valinnaisen `GOOGLE_BOOKS_API_KEY`-avaimen `.env`-tiedostoon.
+  lisäämällä valinnaisen `GOOGLE_BOOKS_API_KEY`-avaimen `.env`-tiedostoon. Haku
+  toimii ISBN:llä (myös viivakoodin numeroilla) tai nimellä ja tekijällä.
+- **Kameraskannaus** — 📷-nappi lukee ISBN-viivakoodin suoraan kameralla
+  (vaatii BarcodeDetector-teknologian tukevan selaimen, esim. Chrome tai
+  Edge). EAN-13/8- ja UPC-viivakoodit tunnistetaan.
+- **Automaattinen päivitys** — palvelin tarkistaa käynnistyksessä VERSION-
+  tiedoston GitHubista ja asentaa uuden version itse. `.env` ja `data/`
+  säilyvät aina koskemattomina.
 
 Mistral-avain säilyy vain palvelimella (`src/server.ts`); selain ei koskaan
 näe sitä — selain puhuu vain `/api/chat`- ja `/api/books`-päätepisteille.

@@ -26,6 +26,7 @@
         <form id="lookup-form">
           <input id="lookup-input" type="text" placeholder="ISBN tai kirjan nimi ja tekijä" autocomplete="off" required />
           <button type="submit">Hae tiedot verkosta</button>
+          <button type="button" class="camera-btn secondary">📷 Lue viivakoodi</button>
         </form>
         <div id="lookup-result"></div>
       </section>
@@ -46,6 +47,16 @@
         <div id="edit-area"></div>
       </section>
     </main>
+    <div id="scanner-overlay" style="display:none">
+      <div class="panel">
+        <h3>Lue viivakoodi</h3>
+        <p class="hint">Suuntaa kamera takakannen viivakoodiin — numeroilla 978 tai 979 alkava koodi on ISBN.</p>
+        <video id="scanner-video" muted playsinline></video>
+        <div class="edit-buttons">
+          <button type="button" id="scanner-close" class="secondary">Sulje</button>
+        </div>
+      </div>
+    </div>
     <script src="app.js"></script>
   </body>
 </html>

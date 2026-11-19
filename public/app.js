@@ -33,6 +33,71 @@ let books = [];
 let editingIndex = null;
 let lastLookup = null;
 
+const cameraSupported = "BarcodeDetector" in window;
+const SCANNER_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
+let scannerStream = null;
+let scannerAnimationFrame = null;
+
+async function startScanner(onResult) {
+  const overlay = document.getElementById("scanner-overlay");
+  if (!cameraSupported) {
+    alert("Kameraskannaus ei toimi tässä selaimessa. Käytä Chromea tai Edgeä — tai kirjoita ISBN käsin.");
+    return;
+  }
+  overlay.style.display = "flex";
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+    });
+    const video = document.getElementById("scanner-video");
+    video.srcObject = scannerStream;
+    await video.play();
+    const detector = new window.BarcodeDetector({ formats: SCANNER_FORMATS });
+    const tick = async () => {
+      if (!scannerStream) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes && codes.length > 0) {
+          const digits = codes[0].rawValue.replace(/\D/g, "");
+          stopScanner();
+          onResult(digits);
+          return;
+        }
+      } catch {}
+      scannerAnimationFrame = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (err) {
+    stopScanner();
+    alert("Kameraa ei saatu käyttöön: " + err.message + " — tarkista selaimen kameran käyttölupa.");
+  }
+}
+
+function stopScanner() {
+  if (scannerAnimationFrame) {
+    cancelAnimationFrame(scannerAnimationFrame);
+    scannerAnimationFrame = null;
+  }
+  if (scannerStream) {
+    scannerStream.getTracks().forEach((t) => t.stop());
+    scannerStream = null;
+  }
+  document.getElementById("scanner-overlay").style.display = "none";
+}
+
+document.getElementById("scanner-close").addEventListener("click", stopScanner);
+
+document.querySelector("#lookup-form .camera-btn").addEventListener("click", () => {
+  startScanner((digits) => {
+    lookupInput.value = digits;
+    lookupForm.requestSubmit();
+  });
+});
+
+if (!cameraSupported) {
+  document.querySelectorAll(".camera-btn").forEach((b) => (b.style.display = "none"));
+}
+
 function addMsg(role, text) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
@@ -173,6 +238,18 @@ function openEditor(index) {
   const lookupBtn = document.createElement("button");
   lookupBtn.type = "button";
   lookupBtn.textContent = "Hae verkosta";
+  const cameraBtn = document.createElement("button");
+  cameraBtn.type = "button";
+  cameraBtn.className = "secondary camera-btn";
+  cameraBtn.textContent = "📷";
+  cameraBtn.title = "Lue viivakoodi kameralla";
+  if (!cameraSupported) cameraBtn.style.display = "none";
+  cameraBtn.addEventListener("click", () => {
+    startScanner((digits) => {
+      editorLookupInput.value = digits;
+      enrichEditor(editorLookupInput.value, setSummary, coverPreview, lookupBtn, form);
+    });
+  });
   const lookupInfo = document.createElement("div");
   lookupInfo.className = "lookup-info";
   const coverPreview = document.createElement("img");
@@ -184,7 +261,7 @@ function openEditor(index) {
   lookupInfo.append(coverPreview, lookupSummary);
   function setSummary(text) { lookupSummary.textContent = text; }
   lookupBtn.addEventListener("click", () => enrichEditor(editorLookupInput.value, setSummary, coverPreview, lookupBtn, form));
-  lookup.append(editorLookupInput, lookupBtn);
+  lookup.append(editorLookupInput, lookupBtn, cameraBtn);
   form.appendChild(lookup);
   form.appendChild(lookupInfo);
 

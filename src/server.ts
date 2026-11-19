@@ -1,5 +1,7 @@
 import path from "node:path";
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import express from "express";
 import { Mistral } from "@mistralai/mistralai";
 
@@ -341,6 +343,76 @@ app.post("/api/lookup", async (req, res) => {
   }
   res.json({ found, sources });
 });
+
+const UPDATE_VERSION_URL = "https://raw.githubusercontent.com/dry-ux/kotikirjasto/main/VERSION";
+const UPDATE_ZIP_URL = "https://codeload.github.com/dry-ux/kotikirjasto/zip/refs/heads/main";
+const VERSION_FILE = path.resolve("VERSION");
+const UPDATE_EXCLUDE = new Set([".env", "data", "node_modules", ".git", ".update-tmp" , ".update.zip"]);
+
+async function checkForUpdate(): Promise<void> {
+  try {
+    const res = await fetch(UPDATE_VERSION_URL, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return;
+    const remote = (await res.text()).trim();
+    let local = "0.0.0";
+    try { local = fsSync.readFileSync(VERSION_FILE, "utf8").trim(); } catch {}
+    if (remote === local || !/^\d+(\.\d+){0,2}$/.test(remote)) return;
+    console.log(`Uusi versio ${remote} saatavilla (nykyinen ${local}) — päivitetään…`);
+    const zipRes = await fetch(UPDATE_ZIP_URL, { signal: AbortSignal.timeout(60000) });
+    if (!zipRes.ok) throw new Error(`ZIP-lataus epäonnistui (HTTP ${zipRes.status})`);
+    const zipPath = path.resolve(".update.zip");
+    fsSync.writeFileSync(zipPath, Buffer.from(await zipRes.arrayBuffer()));
+    const extractDir = path.resolve(".update-tmp");
+    fsSync.rmSync(extractDir, { recursive: true, force: true });
+    fsSync.mkdirSync(extractDir, { recursive: true });
+    if (process.platform === "win32") {
+      const r = spawnSync(
+        "powershell",
+        ["-NoProfile", "-Command", `Expand-Archive -Path '${zipPath}' -DestinationPath '${extractDir}' -Force`],
+        { stdio: "ignore", timeout: 60000 },
+      );
+      if (r.status !== 0) throw new Error("ZIP:n purku epäonnistui");
+    } else {
+      const r = spawnSync("unzip", ["-q", zipPath, "-d", extractDir], { timeout: 60000 });
+      if (r.error || r.status !== 0) throw new Error("ZIP:n purku epäonnistui");
+    }
+    const inner = fsSync
+      .readdirSync(extractDir)
+      .map((d) => path.join(extractDir, d))
+      .find((p) => fsSync.statSync(p).isDirectory());
+    if (!inner) throw new Error("ZIP ei sisällä kansiota");
+    let depsChanged = false;
+    const oldPackage = fsSync.existsSync(path.resolve("package.json"))
+      ? fsSync.readFileSync(path.resolve("package.json"), "utf8")
+      : "";
+    for (const entry of fsSync.readdirSync(inner)) {
+      if (UPDATE_EXCLUDE.has(entry)) continue;
+      const src = path.join(inner, entry);
+      const dest = path.resolve(entry);
+      fsSync.rmSync(dest, { recursive: true, force: true });
+      fsSync.renameSync(src, dest);
+    }
+    fsSync.rmSync(extractDir, { recursive: true, force: true });
+    fsSync.rmSync(zipPath, { force: true });
+    const newPackage = fsSync.readFileSync(path.resolve("package.json"), "utf8");
+    if (oldPackage !== newPackage) {
+      console.log("Riippuvuudet muuttuivat — asennetaan ne (kestää hetken)…");
+      const r = spawnSync("npm", ["install"], {
+        stdio: "inherit",
+        shell: process.platform === "win32",
+        timeout: 300000,
+      });
+      if (r.status !== 0) console.log("npm install ei onnistunut — aja se käsin: npm install");
+    }
+    console.log("Päivitys asennettu. Palvelin käynnistyy uudelleen; jos se ei käynnisty itsestään, aja npm run dev uudelleen.");
+    process.exit(0);
+  } catch (err) {
+    console.log("Automaattinen päivitys ohitettiin:", err instanceof Error ? err.message : err);
+    console.log("Jatketaan nykyisellä versiolla.");
+  }
+}
+
+await checkForUpdate();
 
 app.listen(PORT, () => {
   console.log(`Book catalog running at http://localhost:${PORT}`);
