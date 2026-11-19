@@ -6,8 +6,24 @@ const bookInput = document.getElementById("book-input");
 const bookResult = document.getElementById("book-result");
 const bookList = document.getElementById("book-list");
 const bookCount = document.getElementById("book-count");
+const editArea = document.getElementById("edit-area");
+
+const FIELDS = [
+  ["title", "Title"],
+  ["author", "Author"],
+  ["year", "Year"],
+  ["genre", "Genre"],
+  ["isbn", "ISBN"],
+  ["publisher", "Publisher"],
+  ["pages", "Pages"],
+  ["language", "Language"],
+  ["rating", "Rating"],
+  ["notes", "Notes"],
+];
 
 const history = [];
+let books = [];
+let editingIndex = null;
 
 function addMsg(role, text) {
   const div = document.createElement("div");
@@ -81,18 +97,110 @@ function renderBook(book) {
 
 async function loadBooks() {
   const res = await fetch("/api/books");
-  const books = await res.json();
+  books = await res.json();
   bookList.textContent = "";
   bookCount.textContent = `(${books.length})`;
-  for (const book of books) {
+  books.forEach((book, index) => {
     const li = document.createElement("li");
-    li.textContent = book.title || "Untitled";
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "book-link";
+    link.textContent = book.title || "Untitled";
     const meta = document.createElement("span");
     meta.className = "meta";
     meta.textContent = ` — ${[book.author, book.year, book.genre].filter(Boolean).join(", ")}`;
+    li.appendChild(link);
     li.appendChild(meta);
+    link.addEventListener("click", () => openEditor(index));
     bookList.appendChild(li);
+  });
+  if (editingIndex !== null && editingIndex >= books.length) closeEditor();
+}
+
+function openEditor(index) {
+  editingIndex = index;
+  const book = books[index] || {};
+  editArea.textContent = "";
+  const form = document.createElement("form");
+  form.id = "edit-form";
+  const heading = document.createElement("h3");
+  heading.textContent = `Edit: ${book.title || "Untitled"}`;
+  form.appendChild(heading);
+  for (const [key, label] of FIELDS) {
+    const row = document.createElement("div");
+    row.className = "edit-row";
+    const input = document.createElement("input");
+    input.id = `edit-${key}`;
+    input.name = key;
+    input.value = book[key] || "";
+    input.placeholder = label;
+    input.autocomplete = "off";
+    row.appendChild(input);
+    form.appendChild(row);
   }
+  const buttons = document.createElement("div");
+  buttons.className = "edit-buttons";
+  const save = document.createElement("button");
+  save.type = "submit";
+  save.textContent = "Save";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "Cancel";
+  cancel.className = "secondary";
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.textContent = "Delete";
+  remove.className = "danger";
+  buttons.append(save, cancel, remove);
+  form.appendChild(buttons);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const body = {};
+    for (const [key] of FIELDS) {
+      body[key] = document.getElementById(`edit-${key}`).value.trim();
+    }
+    if (!body.title) {
+      alert("Title is required.");
+      return;
+    }
+    save.disabled = true;
+    try {
+      const res = await fetch(`/api/books/${editingIndex}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      closeEditor();
+      loadBooks();
+    } catch (err) {
+      alert(err.message);
+      save.disabled = false;
+    }
+  });
+  cancel.addEventListener("click", closeEditor);
+  remove.addEventListener("click", async () => {
+    if (!confirm(`Delete "${book.title || "Untitled"}" from the collection?`)) return;
+    remove.disabled = true;
+    try {
+      const res = await fetch(`/api/books/${editingIndex}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      closeEditor();
+      loadBooks();
+    } catch (err) {
+      alert(err.message);
+      remove.disabled = false;
+    }
+  });
+
+  editArea.appendChild(form);
+}
+
+function closeEditor() {
+  editingIndex = null;
+  editArea.textContent = "";
 }
 
 loadBooks();

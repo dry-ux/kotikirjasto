@@ -131,7 +131,61 @@ button:disabled {
   margin: 0.35rem 0;
 }
 
+.book-link {
+  background: none;
+  color: #4a6fa5;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.book-link:hover {
+  color: #2d4a75;
+}
+
 #book-list .meta {
   color: #6f675c;
   font-size: 0.9rem;
+}
+
+.hint {
+  color: #6f675c;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+#edit-form {
+  margin-top: 0.75rem;
+  border-top: 1px solid #e5ddd0;
+  padding-top: 0.75rem;
+}
+
+#edit-form h3 {
+  margin: 0 0 0.5rem;
+}
+
+.edit-row {
+  margin-bottom: 0.4rem;
+}
+
+.edit-row input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+button.secondary {
+  background: #e5ddd0;
+  color: #2d2a26;
+}
+
+button.danger {
+  background: #a94442;
 }

@@ -20,7 +20,7 @@ app.use(express.static(path.resolve("public")));
 
 interface Book {
   title: string;
-  author: string;
+  author?: string;
   year?: string;
   genre?: string;
   isbn?: string;
@@ -29,6 +29,22 @@ interface Book {
   language?: string;
   rating?: string;
   notes?: string;
+}
+
+const FIELD_KEYS = [
+  "title", "author", "year", "genre", "isbn",
+  "publisher", "pages", "language", "rating", "notes",
+] as const;
+
+function normalizeBook(input: Record<string, unknown>): Book {
+  const book: Book = { title: "" };
+  for (const key of FIELD_KEYS) {
+    const value = input[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      book[key] = String(value).trim();
+    }
+  }
+  return book;
 }
 
 async function readBooks(): Promise<Book[]> {
@@ -99,7 +115,11 @@ app.post("/api/books", async (req, res) => {
     });
     const content = response.choices?.[0]?.message?.content;
     const text = typeof content === "string" ? content : "";
-    const book = JSON.parse(text) as Book;
+    const book = normalizeBook(JSON.parse(text));
+    if (!book.title) {
+      res.status(422).json({ error: "Model returned no book title; add more details and try again" });
+      return;
+    }
     const books = await readBooks();
     books.push(book);
     await writeBooks(books);
@@ -112,6 +132,36 @@ app.post("/api/books", async (req, res) => {
 
 app.get("/api/books", async (_req, res) => {
   res.json(await readBooks());
+});
+
+app.put("/api/books/:index", async (req, res) => {
+  const index = Number(req.params.index);
+  const books = await readBooks();
+  if (!Number.isInteger(index) || index < 0 || index >= books.length) {
+    res.status(404).json({ error: "book not found" });
+    return;
+  }
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const updated = normalizeBook(body);
+  if (!updated.title) {
+    res.status(400).json({ error: "title is required" });
+    return;
+  }
+  books[index] = updated;
+  await writeBooks(books);
+  res.json({ book: updated });
+});
+
+app.delete("/api/books/:index", async (req, res) => {
+  const index = Number(req.params.index);
+  const books = await readBooks();
+  if (!Number.isInteger(index) || index < 0 || index >= books.length) {
+    res.status(404).json({ error: "book not found" });
+    return;
+  }
+  books.splice(index, 1);
+  await writeBooks(books);
+  res.json({ total: books.length });
 });
 
 app.listen(PORT, () => {

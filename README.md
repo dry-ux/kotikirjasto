@@ -11,6 +11,8 @@ Features:
 - **Add a book** — paste any description or back-cover text; the model extracts
   structured metadata (title, author, year, genre, ISBN, …) in JSON mode and
   saves it.
+- **Edit & delete** — click any book in the Collection list to open an edit
+  form where you can complete or correct any field, save, or remove the book.
 - **Collection** — your saved books, stored in `data/books.json`.
 
 The Mistral API key lives only on the server (`src/server.ts`); the browser
