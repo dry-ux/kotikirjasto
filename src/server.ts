@@ -61,22 +61,24 @@ async function writeBooks(books: Book[]): Promise<void> {
 }
 
 const CHAT_SYSTEM_PROMPT = [
-  "You are a librarian assistant helping a book lover build a metadata database for her personal book collection.",
-  "Answer questions about books, suggest cataloging conventions, and help organize her library.",
-  "When the user describes a book, offer to extract structured metadata she can save to her collection.",
+  "Olet kirjastonhoitaja-apulainen, joka auttaa kirjoista pitävää ihmistä rakentamaan metatietokannan omasta kirjakokoelmastaan.",
+  "Vastaa aina suomeksi.",
+  "Vastaa kysymyksiin kirjoista, ehdota luokittelutapoja ja auta järjestämään kirjastoa.",
+  "Kun käyttäjä kuvaa kirjan, voit tarjoutua poimimaan siitä jäsenneltyä metatietoa kokoelmaan tallennettavaksi.",
 ].join(" ");
 
 const EXTRACT_SYSTEM_PROMPT = [
-  "You extract book metadata for a personal collection database.",
-  "From the user's description, return a single JSON object with these keys:",
+  "Poimit metatiedot henkilökohtaisen kirjakokoelman tietokantaan käyttäjän kuvauksesta.",
+  "Palauta ainoastaan yksi JSON-objekti, jossa on seuraavat avaimet:",
   'title, author, year, genre, isbn, publisher, pages, language, rating, notes.',
-  "Use an empty string for any field you cannot determine. Do not invent values.",
+  "Kirjoita kenttien arvot suomeksi (paitsi alkukieliset nimet, kuten kirjan ja tekijän nimi).",
+  "Jätä avaimen arvoksi tyhjä merkkijono (\"\"), jos et pysty määrittämään sitä. Älä keksi tietoja.",
 ].join(" ");
 
 app.post("/api/chat", async (req, res) => {
   const { messages } = req.body as { messages?: { role: string; content: string }[] };
   if (!Array.isArray(messages) || messages.length === 0) {
-    res.status(400).json({ error: "messages is required" });
+    res.status(400).json({ error: "Viesti puuttuu" });
     return;
   }
   try {
@@ -94,14 +96,14 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply: text });
   } catch (err) {
     console.error(err);
-    res.status(502).json({ error: "Mistral API request failed" });
+    res.status(502).json({ error: "Mistral API -kutsu epäonnistui" });
   }
 });
 
 app.post("/api/books", async (req, res) => {
   const { description } = req.body as { description?: string };
   if (!description || typeof description !== "string") {
-    res.status(400).json({ error: "description is required" });
+    res.status(400).json({ error: "Kirjan kuvaus puuttuu" });
     return;
   }
   try {
@@ -117,7 +119,7 @@ app.post("/api/books", async (req, res) => {
     const text = typeof content === "string" ? content : "";
     const book = normalizeBook(JSON.parse(text));
     if (!book.title) {
-      res.status(422).json({ error: "Model returned no book title; add more details and try again" });
+      res.status(422).json({ error: "Malli ei tunnistanut kirjan nimeä; lisää tietoja ja kokeile uudelleen" });
       return;
     }
     const books = await readBooks();
@@ -138,13 +140,13 @@ app.put("/api/books/:index", async (req, res) => {
   const index = Number(req.params.index);
   const books = await readBooks();
   if (!Number.isInteger(index) || index < 0 || index >= books.length) {
-    res.status(404).json({ error: "book not found" });
+    res.status(404).json({ error: "Kirjaa ei löytynyt" });
     return;
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const updated = normalizeBook(body);
   if (!updated.title) {
-    res.status(400).json({ error: "title is required" });
+    res.status(400).json({ error: "Kirjan nimi on pakollinen" });
     return;
   }
   books[index] = updated;
@@ -156,7 +158,7 @@ app.delete("/api/books/:index", async (req, res) => {
   const index = Number(req.params.index);
   const books = await readBooks();
   if (!Number.isInteger(index) || index < 0 || index >= books.length) {
-    res.status(404).json({ error: "book not found" });
+    res.status(404).json({ error: "Kirjaa ei löytynyt" });
     return;
   }
   books.splice(index, 1);

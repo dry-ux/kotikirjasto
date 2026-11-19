@@ -1,37 +1,37 @@
 <!doctype html>
-<html lang="en">
+<html lang="fi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Book Catalog Assistant</title>
+    <title>Kotikirjasto</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main>
-      <h1>📚 Book Catalog Assistant</h1>
-      <p class="tagline">Chat about your library and build its metadata database.</p>
+      <h1>📚 Kotikirjasto</h1>
+      <p class="tagline">Keskustele omasta kirjastoistasi ja rakenna niiden metatietokantaa.</p>
 
       <section class="panel">
-        <h2>Chat</h2>
+        <h2>Keskustelu</h2>
         <div id="chat-log" aria-live="polite"></div>
         <form id="chat-form">
-          <input id="chat-input" type="text" placeholder="Ask about a book, author, or how to organize your collection…" autocomplete="off" required />
-          <button type="submit">Send</button>
+          <input id="chat-input" type="text" placeholder="Kysy kirjasta, kirjailijasta tai kokoelman järjestämisestä…" autocomplete="off" required />
+          <button type="submit">Lähetä</button>
         </form>
       </section>
 
       <section class="panel">
-        <h2>Add a book</h2>
+        <h2>Lisää kirja</h2>
         <form id="book-form">
-          <textarea id="book-input" rows="3" placeholder="Paste a description, back-cover text, or just type what you know: 'Pride and Prejudice, Austen, 1813, my favorite copy'"></textarea>
-          <button type="submit">Extract metadata &amp; save</button>
+          <textarea id="book-input" rows="3" placeholder="Liitä kirjan kuvaus tai takakansi, tai kirjoita mitä muistat: 'Pride and Prejudice, Austen, 1813, suosikkikopioni'"></textarea>
+          <button type="submit">Poimi tiedot &amp; tallenna</button>
         </form>
         <div id="book-result"></div>
       </section>
 
       <section class="panel">
-        <h2>Collection <span id="book-count"></span></h2>
-        <p class="hint">Click a book to edit or delete it.</p>
+        <h2>Kokoelma <span id="book-count"></span></h2>
+        <p class="hint">Klikkaa kirjan nimeä muokataksesi tai poistaaksesi sen.</p>
         <ul id="book-list"></ul>
         <div id="edit-area"></div>
       </section>

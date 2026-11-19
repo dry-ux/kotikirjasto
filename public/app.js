@@ -9,16 +9,16 @@ const bookCount = document.getElementById("book-count");
 const editArea = document.getElementById("edit-area");
 
 const FIELDS = [
-  ["title", "Title"],
-  ["author", "Author"],
-  ["year", "Year"],
+  ["title", "Nimi"],
+  ["author", "Tekijä"],
+  ["year", "Vuosi"],
   ["genre", "Genre"],
   ["isbn", "ISBN"],
-  ["publisher", "Publisher"],
-  ["pages", "Pages"],
-  ["language", "Language"],
-  ["rating", "Rating"],
-  ["notes", "Notes"],
+  ["publisher", "Kustantaja"],
+  ["pages", "Sivut"],
+  ["language", "Kieli"],
+  ["rating", "Arvosana"],
+  ["notes", "Muistiinpanot"],
 ];
 
 const history = [];
@@ -49,7 +49,7 @@ chatForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({ messages: history }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Request failed");
+    if (!res.ok) throw new Error(data.error || "Pyyntö epäonnistui");
     pending.textContent = data.reply;
     history.push({ role: "assistant", content: data.reply });
   } catch (err) {
@@ -64,7 +64,7 @@ bookForm.addEventListener("submit", async (e) => {
   if (!description) return;
   const button = bookForm.querySelector("button");
   button.disabled = true;
-  bookResult.textContent = "Extracting metadata…";
+  bookResult.textContent = "Poimitaan tietoja…";
   try {
     const res = await fetch("/api/books", {
       method: "POST",
@@ -72,7 +72,7 @@ bookForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({ description }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Request failed");
+    if (!res.ok) throw new Error(data.error || "Pyyntö epäonnistui");
     renderBook(data.book);
     loadBooks();
     bookInput.value = "";
@@ -89,11 +89,13 @@ function renderBook(book) {
   for (const [key, value] of Object.entries(book)) {
     if (!value) continue;
     const row = table.insertRow();
-    row.insertCell().textContent = key;
+    row.insertCell().textContent = FIELD_LABELS[key] || key;
     row.insertCell().textContent = value;
   }
   bookResult.appendChild(table);
 }
+
+const FIELD_LABELS = Object.fromEntries(FIELDS);
 
 async function loadBooks() {
   const res = await fetch("/api/books");
@@ -105,7 +107,7 @@ async function loadBooks() {
     const link = document.createElement("button");
     link.type = "button";
     link.className = "book-link";
-    link.textContent = book.title || "Untitled";
+    link.textContent = book.title || "Nimetön";
     const meta = document.createElement("span");
     meta.className = "meta";
     meta.textContent = ` — ${[book.author, book.year, book.genre].filter(Boolean).join(", ")}`;
@@ -124,7 +126,7 @@ function openEditor(index) {
   const form = document.createElement("form");
   form.id = "edit-form";
   const heading = document.createElement("h3");
-  heading.textContent = `Edit: ${book.title || "Untitled"}`;
+  heading.textContent = `Muokkaa: ${book.title || "Nimetön"}`;
   form.appendChild(heading);
   for (const [key, label] of FIELDS) {
     const row = document.createElement("div");
@@ -142,14 +144,14 @@ function openEditor(index) {
   buttons.className = "edit-buttons";
   const save = document.createElement("button");
   save.type = "submit";
-  save.textContent = "Save";
+  save.textContent = "Tallenna";
   const cancel = document.createElement("button");
   cancel.type = "button";
-  cancel.textContent = "Cancel";
+  cancel.textContent = "Peruuta";
   cancel.className = "secondary";
   const remove = document.createElement("button");
   remove.type = "button";
-  remove.textContent = "Delete";
+  remove.textContent = "Poista";
   remove.className = "danger";
   buttons.append(save, cancel, remove);
   form.appendChild(buttons);
@@ -161,7 +163,7 @@ function openEditor(index) {
       body[key] = document.getElementById(`edit-${key}`).value.trim();
     }
     if (!body.title) {
-      alert("Title is required.");
+      alert("Kirjan nimi on pakollinen.");
       return;
     }
     save.disabled = true;
@@ -172,7 +174,7 @@ function openEditor(index) {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Request failed");
+      if (!res.ok) throw new Error(data.error || "Pyyntö epäonnistui");
       closeEditor();
       loadBooks();
     } catch (err) {
@@ -182,11 +184,11 @@ function openEditor(index) {
   });
   cancel.addEventListener("click", closeEditor);
   remove.addEventListener("click", async () => {
-    if (!confirm(`Delete "${book.title || "Untitled"}" from the collection?`)) return;
+    if (!confirm(`Poistetaanko "${book.title || "Nimetön"}" kokoelmasta?`)) return;
     remove.disabled = true;
     try {
       const res = await fetch(`/api/books/${editingIndex}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+      if (!res.ok) throw new Error("Poisto epäonnistui");
       closeEditor();
       loadBooks();
     } catch (err) {
