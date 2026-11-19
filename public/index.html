@@ -21,6 +21,16 @@
       </section>
 
       <section class="panel">
+        <h2>Hae verkosta</h2>
+        <p class="hint">Hakee tiedot <strong>Fennicasta</strong> (Kansalliskirjasto), Open Librariesta ja Google Booksesta.</p>
+        <form id="lookup-form">
+          <input id="lookup-input" type="text" placeholder="ISBN tai kirjan nimi ja tekijä" autocomplete="off" required />
+          <button type="submit">Hae tiedot verkosta</button>
+        </form>
+        <div id="lookup-result"></div>
+      </section>
+
+      <section class="panel">
         <h2>Lisää kirja</h2>
         <form id="book-form">
           <textarea id="book-input" rows="3" placeholder="Liitä kirjan kuvaus tai takakansi, tai kirjoita mitä muistat: 'Pride and Prejudice, Austen, 1813, suosikkikopioni'"></textarea>

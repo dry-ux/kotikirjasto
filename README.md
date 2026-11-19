@@ -12,6 +12,11 @@ Ominaisuudet:
   metatiedot (nimi, tekijä, vuosi, genre, ISBN, …) JSON-muodossa ja tallentaa ne.
 - **Muokkaa ja poista** — klikkaa kokoelman kirjan nimeä avataksesi
   muokkauslomakkeen, jossa voit täydentää tai korjata mitä tahansa kenttää.
+- **Hae verkosta** — täydennää metatiedot automaattisesti Fennicasta
+  (Kansalliskirjasto), Open Librariesta ja Google Booksesta. Vain tyhjät
+  kentät täytetään — itse kirjoitetut tiedot säilyvät. Kansikuvat haetaan,
+  kun ne ovat saatavilla. Google Books -rajapinnan rajoituksia voi nostaa
+  lisäämällä valinnaisen `GOOGLE_BOOKS_API_KEY`-avaimen `.env`-tiedostoon.
 
 Mistral-avain säilyy vain palvelimella (`src/server.ts`); selain ei koskaan
 näe sitä — selain puhuu vain `/api/chat`- ja `/api/books`-päätepisteille.
@@ -37,7 +42,7 @@ Avaa sitten selaimessa <http://localhost:3000>.
 ## Rakenne
 
 ```
-src/server.ts     Express-palvelin: käyttöliittymä, /api/chat, /api/books
+src/server.ts     Express-palvelin: käyttöliittymä, /api/chat, /api/books, /api/lookup
 public/           Käyttöliittymä (HTML/CSS/JS)
 data/books.json   Kokoelmasi (luodaan ensimmäisen tallennuksen yhteydessä)
 ```

@@ -189,3 +189,65 @@ button.secondary {
 button.danger {
   background: #a94442;
 }
+
+.cover {
+  max-width: 110px;
+  max-height: 160px;
+  border: 1px solid #e5ddd0;
+  border-radius: 4px;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.cover.small {
+  max-width: 44px;
+  max-height: 64px;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.5rem 0.15rem 0;
+}
+
+.lookup-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lookup-row input {
+  flex: 1;
+}
+
+.lookup-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#lookup-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#lookup-input {
+  flex: 1;
+}
+
+#lookup-result {
+  margin-top: 0.75rem;
+}
+
+#lookup-result table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#lookup-result td {
+  border: 1px solid #e5ddd0;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+#lookup-result td:first-child {
+  font-weight: 600;
+  background: #faf6f0;
+  width: 110px;
+}
